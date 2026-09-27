@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("localserver_native")
 
+# nodejs-mobile 最新 headers（Node.js 24）要求 C++20。
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # node.h 等標頭檔位置（由 GitHub Actions 或手動下載後放在 app/libnode/include/）
 include_directories(${CMAKE_SOURCE_DIR}/../../../libnode/include/node)
 
