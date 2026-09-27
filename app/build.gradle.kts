@@ -37,7 +37,8 @@ android {
 
     packaging {
         jniLibs {
-            useLegacyPackaging = true
+            // libnode.so 很大，保持未壓縮可避免 APK 打包時耗盡 Java heap。
+            useLegacyPackaging = false
         }
     }
 
