@@ -13,6 +13,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.documentfile.provider.DocumentFile
+import java.io.File
 
 class MainActivity : Activity() {
 
@@ -31,6 +32,7 @@ class MainActivity : Activity() {
     private lateinit var importZipButton: Button
     private lateinit var autoScanButton: Button
     private lateinit var startNodeButton: Button
+    private lateinit var viewLogButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +48,7 @@ class MainActivity : Activity() {
         importZipButton = findViewById(R.id.import_zip_button)
         autoScanButton = findViewById(R.id.auto_scan_button)
         startNodeButton = findViewById(R.id.start_node_button)
+        viewLogButton = findViewById(R.id.view_log_button)
 
         webView.webViewClient = WebViewClient()
         webView.settings.apply {
@@ -64,6 +67,7 @@ class MainActivity : Activity() {
         importZipButton.setOnClickListener { launchZipPicker() }
         autoScanButton.setOnClickListener { toggleAutoScan() }
         startNodeButton.setOnClickListener { startNodeEngine() }
+        viewLogButton.setOnClickListener { showLogDialog() }
 
         val savedUri = prefs.getString(KEY_URI, null)
         val restoredDoc = savedUri?.let { tryRestoreFolder(Uri.parse(it)) }
@@ -154,6 +158,50 @@ class MainActivity : Activity() {
             autoScanWatcher?.stop()
             autoScanWatcher = null
             autoScanButton.text = "自動掃描：關"
+        }
+    }
+
+    /**
+     * 顯示 NodeEngine 記錄檔內容——不需要 adb/root/Termux，
+     * App 自己讀自己寫的檔案，並提供「分享」讓你可以直接把記錄傳出去（例如傳給我）。
+     */
+    private fun showLogDialog() {
+        val file = NodeEngine.logFile(applicationContext)
+        val content = if (file.exists()) file.readText() else "（還沒有任何記錄，先按「啟動 Node 引擎」試試）"
+
+        val textView = android.widget.TextView(this).apply {
+            text = content
+            textSize = 11f
+            setPadding(24, 24, 24, 24)
+            setTextIsSelectable(true)
+        }
+        val scroll = android.widget.ScrollView(this).apply { addView(textView) }
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("記錄檔（node-debug.log）")
+            .setView(scroll)
+            .setPositiveButton("分享") { _, _ -> shareLogFile(file) }
+            .setNegativeButton("關閉", null)
+            .show()
+    }
+
+    private fun shareLogFile(file: File) {
+        if (!file.exists()) {
+            Toast.makeText(this, "還沒有記錄檔可以分享", Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                this, "$packageName.fileprovider", file
+            )
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(intent, "分享記錄檔"))
+        } catch (e: Exception) {
+            Toast.makeText(this, "分享失敗：${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

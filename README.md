@@ -83,3 +83,15 @@ Gradle 建置 `assembleDebug`，安裝 apk 到手機上即可。
 https://github.com/digidem/nodejs-mobile/releases 下載 `nodejs-mobile-android-*.zip`
 （不要 `-lite-` 版），解壓縮後把 `include/` 內容放進 `app/libnode/include/`，
 把每個架構的 `libnode.so` 放進 `app/libnode/bin/<架構>/libnode.so`。
+
+## 修正記錄：libc++_shared.so 缺失（閃退）
+症狀：裝上 apk 後按「啟動 Node 引擎」直接閃退，`crash.txt` 顯示：
+`UnsatisfiedLinkError: dlopen failed: library "libc++_shared.so" not found: needed by libnode.so`
+
+原因：`libnode.so` 是用共享版 C++ 執行期（`ANDROID_STL=c++_shared`）編譯的，
+但我們自己的 CMake 設定沒有宣告同樣的 STL，AGP 打包時就不知道要把
+`libc++_shared.so` 一起放進 apk。
+
+修正：在 `app/build.gradle.kts` 的 `defaultConfig.externalNativeBuild.cmake.arguments`
+加上 `-DANDROID_STL=c++_shared`，AGP 之後會自動從 NDK 複製對應 ABI 的
+`libc++_shared.so` 進 apk，不用手動找檔案複製。

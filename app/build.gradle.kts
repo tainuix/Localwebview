@@ -19,6 +19,15 @@ android {
             // 只保留現代手機常見架構，armeabi-v7a 給少數舊機型
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
+
+        externalNativeBuild {
+            cmake {
+                // libnode.so 是用共享版 C++ 執行期（libc++_shared.so）編譯的，
+                // 這裡宣告一致，AGP 才會自動把 libc++_shared.so 一起打包進 apk，
+                // 不然執行期會找不到這個檔案，dlopen 直接失敗閃退。
+                arguments += "-DANDROID_STL=c++_shared"
+            }
+        }
     }
 
     externalNativeBuild {

@@ -86,9 +86,17 @@
                 android:id="@+id/start_node_button"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_weight="2"
                 android:textSize="11sp"
                 android:text="啟動 Node 引擎（動態後端）" />
+
+            <Button
+                android:id="@+id/view_log_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="11sp"
+                android:text="查看記錄" />
 
         </LinearLayout>
 
