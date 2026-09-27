@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("localserver_native")
 
-# nodejs-mobile 最新 headers（Node.js 24）要求 C++20。
+# Node.js 24 的 headers 需要 C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

@@ -37,7 +37,8 @@ android {
 
     packaging {
         jniLibs {
-            // libnode.so 很大，保持未壓縮可避免 APK 打包時耗盡 Java heap。
+            // 注意：AGP 這個命名反直覺——false 才是「現代、不壓縮、直接從 apk mmap 讀取」，
+            // true 是舊式「壓縮後安裝時解壓縮」，壓縮幾十 MB 的 libnode.so 很吃記憶體，容易 OOM。
             useLegacyPackaging = false
         }
     }

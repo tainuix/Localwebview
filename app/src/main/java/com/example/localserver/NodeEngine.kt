@@ -2,6 +2,7 @@ package com.example.localserver
 
 import android.content.Context
 import android.content.res.AssetManager
+import android.system.Os
 import java.io.File
 import java.io.FileOutputStream
 
@@ -34,6 +35,17 @@ object NodeEngine {
         if (started) return
         started = true
         Thread {
+            // Android 系統本身沒有「暫存目錄」的概念，但 Node.js 內部（os.tmpdir()、
+            // 部分模組的暫存檔操作）依賴 TMPDIR 這個環境變數，沒設定的話啟動階段就可能直接崩潰。
+            // 官方 nodejs-mobile 的 Cordova / React Native 外掛都是這樣處理的：
+            // 把 TMPDIR 指到 App 的快取目錄，HOME 指到 App 的私有資料目錄。
+            try {
+                Os.setenv("TMPDIR", context.cacheDir.absolutePath, true)
+                Os.setenv("HOME", context.filesDir.absolutePath, true)
+            } catch (_: Exception) {
+                // 極少數裝置可能不支援，忽略即可，不影響其他功能
+            }
+
             val nodeDir = File(context.filesDir, "nodejs-project")
             if (nodeDir.exists()) nodeDir.deleteRecursively()
             copyAssetFolder(context.assets, "nodejs-project", nodeDir)

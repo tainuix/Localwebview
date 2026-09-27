@@ -8,7 +8,7 @@
         android:allowBackup="true"
         android:label="LocalServer"
         android:usesCleartextTraffic="true"
-        android:extractNativeLibs="true"
+        android:extractNativeLibs="false"
         android:theme="@android:style/Theme.NoTitleBar">
 
         <activity
