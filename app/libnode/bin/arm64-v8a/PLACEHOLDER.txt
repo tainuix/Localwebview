@@ -1,0 +1,7 @@
+這裡要放 libnode.so（Node.js 引擎的 Android 原生函式庫）。
+本地手動放的話：去 https://github.com/digidem/nodejs-mobile/releases 下載
+nodejs-mobile-android-*.zip（不要 -lite- 版），解壓縮後把對應架構（arm64-v8a）
+資料夾裡的 libnode.so 放到這個資料夾，取代這個 PLACEHOLDER.txt。
+
+如果是用專案裡的 .github/workflows/build.yml 交給 GitHub Actions 編譯，
+這一步會自動完成，你不用手動做。

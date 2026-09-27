@@ -1,0 +1,7 @@
+{
+  "name": "local-node-backend",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.js",
+  "description": "在 App 內嵌 Node.js 引擎跑的動態後端範例，改這個資料夾底下的檔案就是改後端邏輯"
+}

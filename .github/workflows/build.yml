@@ -1,0 +1,86 @@
+name: Build APK (with Node.js engine)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK, CMake, build-tools
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125" "cmake;3.22.1"
+
+      - name: Fetch nodejs-mobile Android prebuilt libs
+        run: |
+          set -e
+          API_URL="https://api.github.com/repos/digidem/nodejs-mobile/releases/latest"
+          echo "查詢最新版本：$API_URL"
+          ASSET_URL=$(curl -s "$API_URL" | grep "browser_download_url" | grep "nodejs-mobile-android-" | grep -v "lite" | head -n1 | cut -d '"' -f4)
+          if [ -z "$ASSET_URL" ]; then
+            echo "找不到 nodejs-mobile-android 的下載連結，請檢查 digidem/nodejs-mobile 的 Releases 頁面是否改版"
+            exit 1
+          fi
+          echo "下載：$ASSET_URL"
+          curl -L "$ASSET_URL" -o nodejs-mobile-android.zip
+          mkdir -p nodejs-mobile-extracted
+          unzip -q nodejs-mobile-android.zip -d nodejs-mobile-extracted
+
+          mkdir -p app/libnode/include
+          mkdir -p app/libnode/bin
+
+          NODE_H_PATH=$(find nodejs-mobile-extracted -name node.h | head -n1)
+          if [ -z "$NODE_H_PATH" ]; then
+            echo "在下載的 zip 裡找不到 node.h，可能是官方 zip 內部結構改版，需要手動檢查"
+            exit 1
+          fi
+          # node.h 通常在 .../include/node/node.h，往上兩層拿到 include 根目錄整個複製
+          INCLUDE_ROOT=$(dirname "$(dirname "$NODE_H_PATH")")
+          cp -r "$INCLUDE_ROOT"/. app/libnode/include/
+
+          FOUND_ANY=false
+          for ABI in arm64-v8a armeabi-v7a x86_64 x86; do
+            SO_PATH=$(find nodejs-mobile-extracted -path "*/$ABI/libnode.so" | head -n1)
+            if [ -n "$SO_PATH" ]; then
+              mkdir -p "app/libnode/bin/$ABI"
+              cp "$SO_PATH" "app/libnode/bin/$ABI/libnode.so"
+              echo "已放入 $ABI/libnode.so"
+              FOUND_ANY=true
+            else
+              echo "（找不到 $ABI 的 libnode.so，略過，若這個架構你的手機用不到沒關係）"
+            fi
+          done
+          if [ "$FOUND_ANY" = false ]; then
+            echo "一個架構的 libnode.so 都沒找到，官方 zip 結構可能改版了，需要手動檢查"
+            exit 1
+          fi
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
+      - name: Build debug APK
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/26.1.10909125
+        run: gradle assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalWebViewServer-debug-apk
+          path: app/build/outputs/apk/debug/*.apk

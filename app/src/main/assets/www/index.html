@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>Local Server 測試頁</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; }
+    #time { color: #2563eb; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>成功透過 http://127.0.0.1:8080 載入</h1>
+  <p>現在時間:<span id="time"></span></p>
+  <script>
+    document.getElementById('time').textContent = new Date().toLocaleString();
+    fetch('/index.html').then(r => console.log('fetch 測試成功', r.status));
+  </script>
+</body>
+</html>
